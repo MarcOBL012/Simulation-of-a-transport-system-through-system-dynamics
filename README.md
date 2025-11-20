@@ -33,7 +33,7 @@ Ensure you have the following installed on your local machine:
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/YOUR-USERNAME/vensim-flask-simulator.git](https://github.com/YOUR-USERNAME/vensim-flask-simulator.git)
+git clone https://github.com/MarcOBL012/Simulation-of-a-transport-system-through-system-dynamics.git
 cd vensim-flask-simulator
 ```
 ### 2. Database Configuration
@@ -94,3 +94,4 @@ Once running, access the dashboard at: http://127.0.0.1:5000/
 If you use or extend this project, please add a note in the README or contact:
 
 Marco Obispo — marco.obispo.l@uni.pe
+
