@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vensim Web Simulation</title>
+    <link rel="icon" href="{{ url_for('static', filename='ico/icono.ico') }}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .sim-panel {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        /* Estilo opcional para destacar el control global */
+        #global-controls {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: white;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <img class="loading-image img-fluid" src="{{ url_for('static', filename='images/uni.png') }}" alt="Cargando...">
+    </div>
+
+    <nav class="navbar navbar-dark bg-dark mb-0">
+        <div class="container-fluid justify-content-center">
+            <span class="navbar-brand mb-0 h1">Grupo 7 - Caso: Transporte de carga y logística a través de camiones cisterna  </span>
+        </div>
+    </nav>
+
+    <div id="global-controls" class="container-fluid mb-4 shadow-sm">
+        <div class="row justify-content-center py-2">
+            <div class="col-md-6 col-lg-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-primary text-white fw-bold">
+                        <i class="bi bi-clock-history me-2"></i> Tiempo
+                    </span>
+                    <input type="number" 
+                           step="any" 
+                           min="1" 
+                           class="form-control" 
+                           id="global-final-time" 
+                           value="12" 
+                           placeholder="Meses a simular">
+                    <span class="input-group-text">Meses</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="graficos-container" class="container-fluid pb-5" style="display:none;">
+        <div class="row">
+            {% for nombre_nivel, nivel_data in nivel.items() %}
+                <div class="col-xl-6 col-lg-12 mb-5">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="m-0">{{ nivel_data['info']['title'] }}</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#tablaModal{{ loop.index }}">
+                                    <i class="bi bi-table"></i> Datos
+                                </button>
+                                <button class="btn btn-sm btn-warning" type="button" data-bs-toggle="collapse" data-bs-target="#simPanel{{ loop.index }}" aria-expanded="false">
+                                    <i class="bi bi-sliders"></i> Simular
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="graph-container-{{ nombre_nivel }}" class="text-center">
+                                {{ nivel_data['graph']|safe }}
+                            </div>
+
+                            <div class="collapse mt-3" id="simPanel{{ loop.index }}">
+                                <div class="sim-panel border">
+                                    <h6>Variables de Control (Sensibilidad)</h6>
+                                    <hr>
+                                    <form class="simulation-form" data-target-nivel="{{ nombre_nivel }}">
+                                        <div class="row">
+                                            {% for const in constantes %}
+                                            <div class="col-md-6 mb-2">
+                                                <label for="input-{{ nombre_nivel }}-{{ loop.index0 }}-{{ loop.index }}" class="form-label small fw-bold text-muted" title="{{ const.name }}">
+                                                    {{ const.name }}
+                                                </label>
+                                                <input type="number" 
+                                                       step="any" 
+                                                       class="form-control form-control-sm param-input" 
+                                                       id="input-{{ nombre_nivel }}-{{ loop.index0 }}-{{ loop.index }}" 
+                                                       name="{{ const.name }}" 
+                                                       value="{{ const.value }}">
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="d-grid gap-2 mt-3">
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="bi bi-play-fill"></i> Simular
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="tablaModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Tabla de Datos: {{ nombre_nivel }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ nivel_data['info']['nameLabelX'] }}</th>
+                                                <th>{{ nivel_data['info']['nameLabelY'] }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="table-body-{{ nombre_nivel }}">
+                                        {% for date, value in nivel_data['data'].items() %}
+                                                <tr>
+                                                    <td>{{ date }}</td>
+                                                    <td>{{ "%.2f"|format(value) }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <footer class="bg-dark text-white text-center py-4 mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <p class="mb-1 text-white">&copy; 2025 Grupo 7 - Universidad Nacional de Ingeniería (UNI)</p>
+                    <p class="mb-1 text-white">Taller de Dinámica de Sistemas</p>
+                    <p class="mb-0 small text-white">
+                       Todos los derechos reservados.
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(function() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('graficos-container').style.display = 'block';
+            }, 500);
+
+            document.querySelectorAll('.simulation-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const targetNivel = this.getAttribute('data-target-nivel');
+                    const btn = this.querySelector('button[type="submit"]');
+                    const originalText = btn.innerHTML;
+                    
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Simulando...';
+                    btn.disabled = true;
+
+                    const params = {};
+                    
+                    // 1. Obtener el Tiempo Global
+                    const globalTimeInput = document.getElementById('global-final-time');
+                    if (globalTimeInput && globalTimeInput.value) {
+                        params['FINAL TIME'] = globalTimeInput.value;
+                    }
+
+                    // 2. Obtener los parámetros locales del formulario actual
+                    this.querySelectorAll('.param-input').forEach(input => {
+                        if (input.value !== '') {
+                             params[input.name] = input.value;
+                        }
+                    });
+
+                    fetch('/simulate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            target_nivel: targetNivel,
+                            params: params
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.status === 'ok') {
+                            const graphContainer = document.getElementById('graph-container-' + targetNivel);
+                            graphContainer.innerHTML = data.graph;
+                            // Reactivar scripts de mpld3
+                            Array.from(graphContainer.querySelectorAll("script")).forEach( oldScript => {
+                                const newScript = document.createElement("script");
+                                Array.from(oldScript.attributes).forEach( attr => newScript.setAttribute(attr.name, attr.value) );
+                                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                                oldScript.parentNode.replaceChild(newScript, oldScript);
+                            });
+
+                            // Actualizar tabla
+                            const tableBody = document.getElementById('table-body-' + targetNivel);
+                            if (tableBody && data.table_data) {
+                                tableBody.innerHTML = '';
+                                for (const [time, value] of Object.entries(data.table_data)) {
+                                    const formattedValue = parseFloat(value).toFixed(2);
+                                    tableBody.innerHTML += `<tr><td>${time}</td><td>${formattedValue}</td></tr>`;
+                                }
+                            }
+                        } else {
+                            alert('Error en simulación: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error de conexión con el servidor.');
+                    })
+                    .finally(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
