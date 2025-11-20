@@ -90,3 +90,7 @@ To start the local development server:
 python app.py
 Once running, access the dashboard at: http://127.0.0.1:5000/
 ```
+## 📬 Contact
+If you use or extend this project, please add a note in the README or contact:
+
+Marco Obispo — marco.obispo.l@uni.pe
